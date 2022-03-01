@@ -1,7 +1,6 @@
 import type { NextPage } from 'next'
 import { FormEvent, useState } from 'react'
-import styles from '../styles/Home.module.css'
-import { useAuthProvider } from './contexts/AuthProvider';
+import { useAuthProvider } from '../contexts/AuthProvider';
 const Home: NextPage = () => {
   
   const [email, setEmail] = useState('');
@@ -21,7 +20,7 @@ const Home: NextPage = () => {
   return (
    <form onSubmit={handleSubmit} >
      <input type="text" placeholder='email' value={email} onChange={(e) => setEmail(e.target.value)}/>
-     <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} />
+     <input type="password" placeholder='*******' value={password} onChange={(e) => setPassword(e.target.value)} />
      <button type='submit'>Login</button>
    </form>
   )
