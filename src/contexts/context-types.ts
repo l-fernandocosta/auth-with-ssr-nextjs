@@ -1,3 +1,4 @@
+import { HeadersDefaults } from "axios";
 import { ReactNode } from "react";
 
 export interface SignInCredentials {
@@ -19,4 +20,8 @@ export interface UserProps {
   email: string, 
   roles: string[],
   permissions: string[]
+}
+
+export interface CommonHeaderProperties extends HeadersDefaults {
+  Authorization: string;
 }

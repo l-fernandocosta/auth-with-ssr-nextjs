@@ -2,10 +2,10 @@ import type { NextPage } from 'next'
 import { FormEvent, useState } from 'react'
 import { useAuthProvider } from '../contexts/AuthProvider';
 const Home: NextPage = () => {
-  
+   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const {signIn} = useAuthProvider();
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()

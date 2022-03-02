@@ -1,19 +1,40 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../services/axios";
-import { AuthContextData, AuthContextProps, SignInCredentials, UserProps } from "./context-types";
+import { AuthContextData, AuthContextProps, CommonHeaderProperties, SignInCredentials, UserProps } from "./context-types";
 import Router from 'next/router';
-import { setCookie } from 'nookies';
+import { destroyCookie, parseCookies, setCookie } from 'nookies';
+import { HeadersDefaults } from "axios";
 
 const AuthProvider =  createContext({} as AuthContextData)
 export const useAuthProvider = () => useContext(AuthProvider);
 
-
-
+export function signOut(){
+  destroyCookie(undefined, 'nextauth.token');
+  destroyCookie(undefined, 'nextauth.refreshToken');
+  Router.push('/');
+}
 
 export function AuthContext( {children} : AuthContextProps) {
   const [user, setUser] = useState<UserProps>();
-  
-  const isAuth = !!user;
+  const isAuth = !!user; 
+
+  useEffect(() => {
+      const {'nextauth.token': token} = parseCookies();
+
+     if(token) {
+       api.get('/me').then(response => {
+         const {email, roles, permissions} = response.data;
+         setUser({
+          email, roles, permissions
+        })
+       }).catch((err) => {
+        signOut();
+       })
+       
+     }
+  }, [])
+
+
 
   async function signIn({email, password}: SignInCredentials) {
   try {
@@ -23,23 +44,23 @@ export function AuthContext( {children} : AuthContextProps) {
     })
     const {permissions, roles, token, refreshToken } =  response.data;
 
-    console.log(response.data)
-  
     setUser({
       email, 
       permissions, 
       roles
     })
    
-    setCookie(null,'token-backendstudy', token , {
+    setCookie(null,'nextauth.token', token , {
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/"
+    })
+
+    setCookie(undefined, 'nextauth.refreshToken', refreshToken, {
       maxAge: 30*24*60*60,
       path: "/"
     })
 
-    setCookie(undefined, 'refreshToken-backend', token, {
-      maxAge: 30*24*60*60,
-      path: "/"
-    })
+    api.defaults.headers = {Authorization: `Bearer ${token}`} as CommonHeaderProperties;
 
     Router.push("/dashboard")
   }catch(err){
