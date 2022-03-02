@@ -1,8 +1,8 @@
-import type { GetServerSideProps, GetStaticProps, NextPage } from 'next'
-import { redirect } from 'next/dist/server/api-utils';
-import { parseCookies } from 'nookies';
+import type { GetServerSideProps, NextPage } from 'next'
+
 import { FormEvent, useState } from 'react'
 import { useAuthProvider } from '../contexts/AuthProvider';
+import SSRGuest from '../utils/SSRGuest';
 const Home: NextPage = () => {
    
   const [email, setEmail] = useState('');
@@ -31,22 +31,9 @@ const Home: NextPage = () => {
 export default Home
 
 
-export const getServerSideProps : GetServerSideProps = async (ctx) => {
-  
-  const {'nextauth.token': token} = parseCookies(ctx);
-
-  if(token){
-    return {
-      redirect: {
-        destination: '/dashboard',
-        permanent: false,
-      }
-    }
-  }
-
-  
+export const getServerSideProps : GetServerSideProps = SSRGuest(async (ctx) => {
   return {
     props: {}
   }
-}
+});
 
