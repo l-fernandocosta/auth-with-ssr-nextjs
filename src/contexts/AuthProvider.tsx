@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { api } from "../services/axios";
+import { api } from "../services/apiClient";
 import { AuthContextData, AuthContextProps, CommonHeaderProperties, SignInCredentials, UserProps } from "./context-types";
 import Router from 'next/router';
 import { destroyCookie, parseCookies, setCookie } from 'nookies';
-import { HeadersDefaults } from "axios";
 
 const AuthProvider =  createContext({} as AuthContextData)
 export const useAuthProvider = () => useContext(AuthProvider);
@@ -50,7 +49,7 @@ export function AuthContext( {children} : AuthContextProps) {
       roles
     })
    
-    setCookie(null,'nextauth.token', token , {
+    setCookie(undefined,'nextauth.token', token , {
       maxAge: 60 * 60 * 24 * 30,
       path: "/"
     })

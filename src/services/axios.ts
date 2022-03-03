@@ -1,7 +1,8 @@
-import axios, { AxiosError, AxiosRequestHeaders } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { parseCookies, setCookie } from 'nookies'
 import { signOut } from '../contexts/AuthProvider';
 import { CommonHeaderProperties } from '../contexts/context-types';
+import { TokenErrors } from './errors/TokenErrors';
 
 interface FailedRequestProps{
    onSuccess: (token: string) => void;
@@ -9,43 +10,47 @@ interface FailedRequestProps{
 }
 
 
-let cookies = parseCookies();
 let isRefreshing = false;
 let failedRequestsQueu: FailedRequestProps[] = [];
 
+export function setupAPIClient(ctx = undefined) {
 
-
-export const api = axios.create({
+  let cookies = parseCookies(ctx);
+  const api = axios.create({
   baseURL: "http://localhost:3334",
   headers: { Authorization: `Bearer ${cookies['nextauth.token']}` }
-})
+}); 
 
 api.interceptors.response.use(
+
   (response) => { return response },
+
   (error: AxiosError) => {
+
     if (error.response?.status === 401) {
       console.log(error.response)
+
       if (error.response.data.code === 'token.expired') {
         console.log("Renovar token ")
 
-        const cookies = parseCookies();
+        let cookies = parseCookies(ctx);
         const { 'nextauth.refreshToken': refreshToken } = cookies;
         const originalConfig  = error.config;
 
         if (!isRefreshing) {
           isRefreshing = true;
+          console.log('Refreshing')
 
           api.post('/refresh', {
             refreshToken
           }).then((response) => {
 
-            console.log()
 
-            setCookie(undefined, 'nextauth.token', response.data.token, {
+            setCookie(ctx, 'nextauth.token', response.data.token, {
               maxAge: 60 * 60 * 24 * 30,
               path: '/'
             })
-            setCookie(undefined, 'nextauth.refreshToken', response.data.refreshToken, {
+            setCookie(ctx, 'nextauth.refreshToken', response.data.refreshToken, {
               maxAge: 60 * 60 * 24 * 30,
               path: '/'
             })
@@ -58,6 +63,10 @@ api.interceptors.response.use(
             
             failedRequestsQueu.forEach(request => request.onFailure(err))
             failedRequestsQueu = [];
+            if(typeof window === 'undefined'){
+              signOut();
+              console.log(typeof window)
+            }
           }).finally(() => {
             isRefreshing=false;
           });
@@ -74,8 +83,15 @@ api.interceptors.response.use(
           })
         })
       } else {
-        signOut();
+        if(typeof window === 'undefined'){
+          signOut();
+        } else {
+          return Promise.reject(new TokenErrors());
+        }
       }
     }
     return Promise.reject(error);
   }); 
+
+  return api; 
+}
