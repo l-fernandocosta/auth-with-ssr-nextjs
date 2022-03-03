@@ -11,7 +11,8 @@ export interface  AuthContextProps {
 }
 
 export interface AuthContextData {
-  signIn(credentials: SignInCredentials ): Promise<void>;
+  signIn: (credentials: SignInCredentials ) =>  Promise<void>;
+  signOut: () => void; 
   isAuth: boolean, 
   user: UserProps | undefined;
 }

@@ -7,9 +7,13 @@ import { destroyCookie, parseCookies, setCookie } from 'nookies';
 const AuthProvider =  createContext({} as AuthContextData)
 export const useAuthProvider = () => useContext(AuthProvider);
 
+let bcChannel: BroadcastChannel;
+
 export function signOut(){
   destroyCookie(undefined, 'nextauth.token');
   destroyCookie(undefined, 'nextauth.refreshToken');
+  bcChannel.postMessage('signOutUser')
+  
   Router.push('/');
 }
 
@@ -33,14 +37,29 @@ export function AuthContext( {children} : AuthContextProps) {
      }
   }, [])
 
+  useEffect(() => {
 
+    bcChannel = new BroadcastChannel('bc-test') 
+
+    bcChannel.onmessage = (message) => {
+      switch(message.data){
+        case 'signOutUser':
+          signOut();
+          break; 
+          default:
+            break; 
+      }
+    }
+  }, [])
 
   async function signIn({email, password}: SignInCredentials) {
-  try {
+  
+    try {
     const response = await api.post('sessions', {
       email, 
       password
     })
+
     const {permissions, roles, token, refreshToken } =  response.data;
 
     setUser({
@@ -63,13 +82,13 @@ export function AuthContext( {children} : AuthContextProps) {
 
     Router.push("/dashboard")
   }catch(err){
-    console.log(err)
+    
   }
     
  }
  return ( 
 
-  <AuthProvider.Provider value={ {signIn, isAuth, user}}>
+  <AuthProvider.Provider value={ {signIn, isAuth, user, signOut}}>
       {children}
   </AuthProvider.Provider>
   )
